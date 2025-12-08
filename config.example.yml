@@ -1,0 +1,16 @@
+env: development
+port: 8080
+debug: true
+secret: "your-secret-key" # Used for JWT signing
+host: "localhost"
+database:
+  url: "postgres://user:password@localhost:5432/dbname?sslmode=disable"
+  sqldir: "./src/sql" # Directory for SQL queries
+  migrations: "./src/sql/migrations" # Directory for migration files
+cors:
+  origins:
+    - "http://localhost:3000" # Example allowed origin for CORS
+upload:
+  bucket: "your-gcs-bucket-name"
+  cdn: "https://storage.googleapis.com"
+  credentials: "path/to/your/gcs-credentials.json"

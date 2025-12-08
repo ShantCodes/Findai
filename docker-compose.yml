@@ -1,0 +1,21 @@
+
+services:
+  postgres:
+    container_name: 'findai'
+    image: 'postgres:14.4-alpine'
+    environment:
+      POSTGRES_USER: 'shant'
+      POSTGRES_PASSWORD: 'passwd'
+      POSTGRES_DB: 'findai'
+      PGDATA: '/data/postgres'
+    volumes:
+      - '../sif-postgres:/data/postgres'
+    expose:
+      - '5433'
+    ports:
+      - '5433:5432'
+    restart: 'always'
+
+networks:
+  default:
+    driver: bridge

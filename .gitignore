@@ -1,0 +1,11 @@
+# Configuration
+config.yml
+
+# Compiled binaries
+findai
+
+# System files
+.DS_Store
+
+# Vendor directory
+vendor/
