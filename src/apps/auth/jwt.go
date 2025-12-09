@@ -2,7 +2,7 @@ package auth
 
 import (
 	"errors"
-	"sif/src/config"
+	"findai/src/config"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"

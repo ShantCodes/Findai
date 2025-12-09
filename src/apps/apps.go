@@ -3,7 +3,7 @@ package apps
 import (
 	"fmt"
 	"net/http"
-	"sif/src/config"
+	"findai/src/config"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-openapi/runtime/middleware"

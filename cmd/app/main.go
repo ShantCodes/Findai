@@ -2,8 +2,8 @@ package main
 
 import (
 	"log"
-	"sif/src/apps"
-	"sif/src/config"
+	"findai/src/apps"
+	"findai/src/config"
 	"time"
 
 	database "github.com/socious-io/pkg_database"
