@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"sif/src/config"
+	"findai/src/config"
 	"strconv"
 	"time"
 
