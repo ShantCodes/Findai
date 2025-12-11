@@ -1,16 +1,14 @@
+
 package views
 
 import (
 	"net/http"
 	"findai/src/apps/auth"
-	"findai/src/apps/models"
-
 	"github.com/gin-gonic/gin"
-	"github.com/jmoiron/sqlx"
 )
 
 type AuthViews struct {
-	Db *sqlx.DB
+	AuthService *auth.AuthService
 }
 
 type RegisterRequest struct {
@@ -26,20 +24,7 @@ func (v *AuthViews) Register(c *gin.Context) {
 		return
 	}
 
-	hashedPassword, err := auth.HashPassword(req.Password)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
-		return
-	}
-
-	user := models.User{
-		Username: req.Username,
-		Email:    req.Email,
-		Password: hashedPassword,
-	}
-
-	query := `INSERT INTO users (username, email, password, is_active) VALUES ($1, $2, $3, $4) RETURNING id`
-	err = v.Db.QueryRow(query, user.Username, user.Email, user.Password, true).Scan(&user.Id)
+	user, err := v.AuthService.RegisterUser(req.Username, req.Email, req.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 		return
@@ -60,15 +45,7 @@ func (v *AuthViews) Login(c *gin.Context) {
 		return
 	}
 
-	var user models.User
-	query := `SELECT id, email, password FROM users WHERE email=$1`
-	err := v.Db.Get(&user, query, req.Email)
-	if err != nil {
-	 c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-		return
-	}
-
-	err = auth.CheckPasswordHash(req.Password, user.Password)
+	user, err := v.AuthService.LoginUser(req.Email, req.Password)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
