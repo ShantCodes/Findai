@@ -1,8 +1,11 @@
 package auth
 
+
 import (
 	"findai/src/apps/models"
+	"findai/src/apps/utils"
 
+	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -10,17 +13,22 @@ type AuthService struct {
 	Db *sqlx.DB
 }
 
-func (s *AuthService) RegisterUser(username, email, password string) (*models.User, error) {
-	hashedPassword, err := HashPassword(password)
-	if err != nil {
+func (s *AuthService) RegisterUser(c *gin.Context) (*models.User, error) {
+	form := new(models.RegisterForm)
+	if err := c.ShouldBindJSON(&form); err != nil {
 		return nil, err
 	}
 
-	user := models.User{
-		Username: username,
-		Email:    email,
-		Password: hashedPassword,
+	var user models.User
+	if err := utils.Copy(&form, &user); err != nil {
+		return nil, err
 	}
+
+	hashedPassword, err := HashPassword(form.Password)
+	if err != nil {
+		return nil, err
+	}
+	user.Password = hashedPassword
 
 	query := `INSERT INTO users (username, email, password, is_active) VALUES ($1, $2, $3, $4) RETURNING id`
 	err = s.Db.QueryRow(query, user.Username, user.Email, user.Password, true).Scan(&user.Id)
@@ -31,15 +39,21 @@ func (s *AuthService) RegisterUser(username, email, password string) (*models.Us
 	return &user, nil
 }
 
-func (s *AuthService) LoginUser(email, password string) (*models.User, error) {
+
+func (s *AuthService) LoginUser(c *gin.Context) (*models.User, error) {
+	var form models.LoginForm
+	if err := c.ShouldBindJSON(&form); err != nil {
+		return nil, err
+	}
+
 	var user models.User
 	query := `SELECT id, email, password FROM users WHERE email=$1`
-	err := s.Db.Get(&user, query, email)
+	err := s.Db.Get(&user, query, form.Email)
 	if err != nil {
 		return nil, err
 	}
 
-	err = CheckPasswordHash(password, user.Password)
+	err = CheckPasswordHash(form.Password, user.Password)
 	if err != nil {
 		return nil, err
 	}
