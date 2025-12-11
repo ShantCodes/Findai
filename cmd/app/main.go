@@ -4,6 +4,7 @@ package main
 import (
 	"log"
 	"findai/src/apps"
+	"findai/src/apps/utils"
 	"findai/src/config"
 	"findai/src/database"
 )
@@ -14,6 +15,7 @@ func main() {
 	}
 
 	database.Connect(config.Config.Database.URL)
+	utils.SetDB(database.DB().DB)
 
 	apps.Serve()
 }
