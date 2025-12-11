@@ -48,8 +48,11 @@ func (s *AuthService) LoginUser(c *gin.Context) (*models.User, error) {
 	}
 
 	var user models.User
-	query := `SELECT id, email, password FROM users WHERE email=$1`
-	err := s.Db.Get(&user, query, form.Email)
+	row, err := utils.QuerySelect(c.Request.Context(), "login", form.Email)
+	if err != nil {
+		return nil, err
+	}
+	err = row.Scan(&user.Id, &user.Username, &user.Email, &user.Password)
 	if err != nil {
 		return nil, err
 	}
