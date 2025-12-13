@@ -2,25 +2,24 @@ package views
 
 import (
 	"findai/src/apps/auth"
-	"findai/src/database"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jmoiron/sqlx"
 )
 
 type AuthViews struct {
 	AuthService *auth.AuthService
 }
 
-func NewAuthViews() *AuthViews {
-	db := database.DB()
+func NewAuthViews(db *sqlx.DB) *AuthViews {
 	authService := &auth.AuthService{Db: db}
 	return &AuthViews{AuthService: authService}
 }
 
-func AuthGroup(router *gin.Engine) {
+func AuthGroup(router *gin.Engine, db *sqlx.DB) {
 	g := router.Group("auth")
-	v := NewAuthViews()
+	v := NewAuthViews(db)
 
 	g.POST("/register", v.Register)
 	g.POST("/login", v.Login)

@@ -8,31 +8,15 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/jmoiron/sqlx"
 )
 
 var (
-	// Database connection (should be set during app initialization)
-	db *sql.DB
-	dbMutex sync.RWMutex
-	
 	// Cache for loaded SQL queries to avoid disk reads on every call
 	queryCache = make(map[string]string)
 	cacheMutex sync.RWMutex
 )
-
-// SetDB sets the database connection for QuerySelect to use
-func SetDB(database *sql.DB) {
-	dbMutex.Lock()
-	db = database
-	dbMutex.Unlock()
-}
-
-// GetDB returns the database connection
-func GetDB() *sql.DB {
-	dbMutex.RLock()
-	defer dbMutex.RUnlock()
-	return db
-}
 
 // loadQueryFromFile loads a SQL query from file with caching
 func loadQueryFromFile(queryName string) (string, error) {
@@ -88,7 +72,7 @@ func loadQueryFromFile(queryName string) (string, error) {
 	}
 
 	query := strings.TrimSpace(string(data))
-	
+
 	// Cache the query for future use
 	cacheMutex.Lock()
 	queryCache[queryName] = query
@@ -98,61 +82,41 @@ func loadQueryFromFile(queryName string) (string, error) {
 }
 
 // QuerySelect loads a SQL query from file AND executes it, returning a single row
-func QuerySelect(ctx context.Context, queryName string, args ...interface{}) (*sql.Row, error) {
+func QuerySelect(ctx context.Context, db *sqlx.DB, queryName string, args ...interface{}) *sqlx.Row {
 	// 1. Load the SQL query from file
 	sqlQuery, err := loadQueryFromFile(queryName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load query '%s': %v", queryName, err)
+		// This is not ideal, but we need to return a *sqlx.Row.
+		// We can't return an error directly.
+		// The caller will need to check row.Err().
+		return &sqlx.Row{}
 	}
 
-	// 2. Get the database connection
-	db := GetDB()
-	if db == nil {
-		return nil, fmt.Errorf("database connection not set. Call utils.SetDB() first")
-	}
-
-	// 3. Execute the query and return the row
-	// QueryRowContext executes the query and returns a single row
-	// The caller will need to call .Scan() on the returned row
-	return db.QueryRowContext(ctx, sqlQuery, args...), nil
+	// 2. Execute the query and return the row
+	return db.QueryRowxContext(ctx, sqlQuery, args...)
 }
 
 // QuerySelectRows loads a SQL query from file AND executes it, returning multiple rows
-func QuerySelectRows(ctx context.Context, queryName string, args ...interface{}) (*sql.Rows, error) {
+func QuerySelectRows(ctx context.Context, db *sqlx.DB, queryName string, args ...interface{}) (*sqlx.Rows, error) {
 	// 1. Load the SQL query from file
 	sqlQuery, err := loadQueryFromFile(queryName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load query '%s': %v", queryName, err)
 	}
 
-	// 2. Get the database connection
-	db := GetDB()
-	if db == nil {
-		return nil, fmt.Errorf("database connection not set. Call utils.SetDB() first")
-	}
-
-	// 3. Execute the query and return multiple rows
-	// QueryContext executes the query and returns multiple rows
-	// The caller will need to iterate over the rows
-	return db.QueryContext(ctx, sqlQuery, args...)
+	// 2. Execute the query and return multiple rows
+	return db.QueryxContext(ctx, sqlQuery, args...)
 }
 
 // ExecSelect loads a SQL query from file AND executes it (for INSERT, UPDATE, DELETE)
-func ExecSelect(ctx context.Context, queryName string, args ...interface{}) (sql.Result, error) {
+func ExecSelect(ctx context.Context, db *sqlx.DB, queryName string, args ...interface{}) (sql.Result, error) {
 	// 1. Load the SQL query from file
 	sqlQuery, err := loadQueryFromFile(queryName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load query '%s': %v", queryName, err)
 	}
 
-	// 2. Get the database connection
-	db := GetDB()
-	if db == nil {
-		return nil, fmt.Errorf("database connection not set. Call utils.SetDB() first")
-	}
-
-	// 3. Execute the query (for INSERT, UPDATE, DELETE operations)
-	// ExecContext executes the query and returns a Result with rows affected, last insert ID, etc.
+	// 2. Execute the query (for INSERT, UPDATE, DELETE operations)
 	return db.ExecContext(ctx, sqlQuery, args...)
 }
 

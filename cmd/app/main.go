@@ -1,13 +1,17 @@
 package main
 
-
 import (
-	"log"
 	"findai/src/apps"
-	"findai/src/apps/utils"
 	"findai/src/config"
 	"findai/src/database"
+	"log"
+
+	"github.com/jmoiron/sqlx"
 )
+
+type Server struct {
+	DB *sqlx.DB
+}
 
 func main() {
 	if _, err := config.Init("config.yml"); err != nil {
@@ -15,8 +19,8 @@ func main() {
 	}
 
 	database.Connect(config.Config.Database.URL)
-	utils.SetDB(database.DB().DB)
+	server := &Server{DB: database.DB()}
 
-	apps.Serve()
+	apps.Serve(server.DB)
 }
 

@@ -29,13 +29,9 @@ func (s *AuthService) RegisterUser(c *gin.Context) (*models.User, error) {
 	}
 	user.Password = hashedPassword
 
-	row, err := utils.QuerySelect(c.Request.Context(), "register",
+	row := utils.QuerySelect(c.Request.Context(), s.Db, "register",
 		user.Username, user.Email, user.Password)
-	if err != nil {
-		return nil, err
-	}
-	err = row.Scan(&user.Id)
-	if err != nil {
+	if err := row.Scan(&user.Id); err != nil {
 		return nil, err
 	}
 	return &user, nil
@@ -48,17 +44,12 @@ func (s *AuthService) LoginUser(c *gin.Context) (*models.User, error) {
 	}
 
 	var user models.User
-	row, err := utils.QuerySelect(c.Request.Context(), "login", form.Email)
-	if err != nil {
-		return nil, err
-	}
-	err = row.Scan(&user.Id, &user.Username, &user.Email, &user.Password)
-	if err != nil {
+	row := utils.QuerySelect(c.Request.Context(), s.Db, "login", form.Email)
+	if err := row.Scan(&user.Id, &user.Username, &user.Email, &user.Password); err != nil {
 		return nil, err
 	}
 
-	err = CheckPasswordHash(form.Password, user.Password)
-	if err != nil {
+	if err := CheckPasswordHash(form.Password, user.Password); err != nil {
 		return nil, err
 	}
 
