@@ -1,6 +1,7 @@
 package views
 
 import (
+	"findai/src/apps/auth"
 	"findai/src/apps/models"
 	"findai/src/apps/utils"
 	"findai/src/database"
@@ -23,7 +24,7 @@ func PromptGroup(router *gin.Engine, db *sqlx.DB) {
 	v := NewPromptViews(db)
 
 	g.POST("", v.CreatePrompt)
-	g.GET("", utils.Paginate(), v.GetPrompts)
+	g.GET("", auth.LoginRequired(), auth.AdminOnly(), utils.Paginate(), v.GetPrompts)
 }
 
 func (v *PromptViews) CreatePrompt(c *gin.Context) {

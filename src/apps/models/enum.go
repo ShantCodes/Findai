@@ -8,6 +8,7 @@ import (
 type (
 	ContentType string
 	AiModelType string
+	RoleType    string
 )
 
 const (
@@ -20,6 +21,9 @@ const (
 	AiModelTypeGemini   AiModelType = "GEMINI"
 	AiModelTypeGrok     AiModelType = "GROK"
 	AiModelTypeDeepSeek AiModelType = "DEEPSEEK"
+
+	RoleTypeAdmin RoleType = "ADMIN"
+	RoleTypeUser  RoleType = "USER"
 )
 
 //================================================
@@ -37,6 +41,15 @@ func (v *AiModelType) Scan(value interface{}) error {
 	return scanEnum(value, (*string)(v))
 }
 func (v AiModelType) Value() (driver.Value, error) {
+	return string(v), nil
+}
+
+//================================================
+
+func (v *RoleType) Scan(value interface{}) error {
+	return scanEnum(value, (*string)(v))
+}
+func (v RoleType) Value() (driver.Value, error) {
 	return string(v), nil
 }
 
