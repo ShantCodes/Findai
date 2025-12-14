@@ -9,6 +9,17 @@ import (
 
 var db *sqlx.DB
 
+type Filter struct {
+	Key   string
+	Value string
+}
+
+type Paginate struct {
+	Limit   int
+	Offset  int
+	Filters []Filter
+}
+
 func Connect(url string) {
 	var err error
 	db, err = sqlx.Connect("postgres", url)
