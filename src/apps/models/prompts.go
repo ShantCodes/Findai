@@ -31,6 +31,11 @@ func NewPromptModel(db *sqlx.DB) *PromptModel {
 	return &PromptModel{Db: db}
 }
 
+type PromptWithCount struct {
+	Prompt
+	TotalCount int `db:"total_count"`
+}
+
 func (m *PromptModel) InsertPrompt(ctx *gin.Context) (*Prompt, error) {
 	form := new(PromptForm)
 	if err := ctx.ShouldBindJSON(&form); err != nil {
@@ -94,11 +99,6 @@ func GetPrompts(p database.Paginate) ([]*Prompt, int, error) {
 	prompts := []*Prompt{}
 	totalCount := 0
 
-	type PromptWithCount struct {
-		Prompt
-		TotalCount int `db:"total_count"`
-	}
-
 	for rows.Next() {
 		var result PromptWithCount
 		if err := rows.StructScan(&result); err != nil {
@@ -109,4 +109,20 @@ func GetPrompts(p database.Paginate) ([]*Prompt, int, error) {
 	}
 
 	return prompts, totalCount, nil
+}
+
+func DeletePromptById(id uuid.UUID) ([]*Prompt, error) {
+	rows, err := utils.QuerySelectRows(context.Background(), database.DB(), "delete_by_id", id)
+	if err != nil {
+		return nil, err
+	}
+	prompts := []*Prompt{}	
+	for rows.Next() {
+		var result PromptWithCount
+		if err = rows.StructScan(&result); err != nil {
+			return nil, err
+		}
+		prompts = append(prompts, &result.Prompt)		
+	}
+	return prompts, err
 }
