@@ -13,6 +13,14 @@ type Role struct {
 	UserId uuid.UUID `db:"user_id" json:"user_id"`
 }
 
+type RoleModel struct {
+	Db *sqlx.DB
+}
+
+func NewRoleModel(db *sqlx.DB) *RoleModel{
+	return &RoleModel{Db: db}
+}
+
 func GetRolesByUserID(db *sqlx.DB, userID uuid.UUID) ([]Role, error) {
 	var roles []Role
 	rows, err := utils.QuerySelectRows(context.Background(), db, "get_roles_by_user_id", userID)
@@ -29,5 +37,24 @@ func GetRolesByUserID(db *sqlx.DB, userID uuid.UUID) ([]Role, error) {
 		roles = append(roles, role)
 	}
 
+	return roles, nil
+}
+
+func (m *RoleModel) GetRoles() ([]Role, error) {
+	var roles []Role
+	rows, err := utils.QuerySelectRows(context.Background(), m.Db, "get_roles")
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		var role Role
+		if err := rows.StructScan(&role); err != nil {
+			return nil, err
+		}
+		roles = append(roles, role)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 	return roles, nil
 }

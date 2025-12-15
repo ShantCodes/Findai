@@ -8,4 +8,5 @@ import (
 func Init(r *gin.Engine, db *sqlx.DB) {
 	AuthGroup(r, db)
 	PromptGroup(r, db)
+	RoleGroup(r, db)
 }
