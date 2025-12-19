@@ -116,13 +116,44 @@ func DeletePromptById(id uuid.UUID) ([]*Prompt, error) {
 	if err != nil {
 		return nil, err
 	}
-	prompts := []*Prompt{}	
+	prompts := []*Prompt{}
 	for rows.Next() {
 		var result PromptWithCount
 		if err = rows.StructScan(&result); err != nil {
 			return nil, err
 		}
-		prompts = append(prompts, &result.Prompt)		
+		prompts = append(prompts, &result.Prompt)
 	}
 	return prompts, err
+}
+
+func GetUserPrompts(p database.Paginate) ([]*Prompt, int, error) {
+	var userID string
+	for _, filter := range p.Filters {
+		switch filter.Key {
+		case "user_id":
+			userID = filter.Value
+		}
+	}
+	db := database.DB()
+
+	res, err := utils.QuerySelectRows(context.Background(), db, "get_user_prompts", userID)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer res.Close()
+	prompts := []*Prompt{}
+	totalCount := 0
+
+	for res.Next() {
+		var result PromptWithCount
+		if err := res.StructScan(&result); err != nil {
+			return nil, 0, err
+		}
+		prompts = append(prompts, &result.Prompt)
+		totalCount = result.TotalCount
+	}
+
+	return prompts, totalCount, nil
+
 }

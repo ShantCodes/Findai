@@ -1,0 +1,1 @@
+SELECT * FROM prompts WHERE user_id=$1

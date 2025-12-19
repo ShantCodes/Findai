@@ -26,7 +26,8 @@ func PromptGroup(router *gin.Engine, db *sqlx.DB) {
 
 	g.POST("", v.CreatePrompt)
 	g.GET("", auth.LoginRequired(), auth.AdminOnly(), utils.Paginate(), v.GetPrompts)
-	g.DELETE("/delete", auth.LoginRequired(), auth.AdminOnly(),v.DeletePrompt)
+	g.DELETE("/delete", auth.LoginRequired(), auth.AdminOnly(), v.DeletePrompt)
+	g.GET("/myprompts", auth.LoginRequired(), auth.AdminOnly(), utils.Paginate(), v.GetUserPrompts)
 }
 
 func (v *PromptViews) CreatePrompt(c *gin.Context) {
@@ -67,6 +68,22 @@ func (v *PromptViews) DeletePrompt(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"results": res,
+		"page":    c.MustGet("page"),
+		"limit":   c.MustGet("limit"),
+	})
+}
+
+func (v *PromptViews) GetUserPrompts(c *gin.Context) {
+	pagination := c.MustGet("paginate").(database.Paginate)
+
+	prompts, total, err := models.GetUserPrompts(pagination)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"results": prompts,
+		"total":   total,
 		"page":    c.MustGet("page"),
 		"limit":   c.MustGet("limit"),
 	})
